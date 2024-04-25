@@ -1,0 +1,175 @@
+def Set_Num_cycles2(G, which_edge = 0):
+    #number of cycles of fixed length contains the edge (0,1)
+
+    V = G.vertices()
+    E = G.edges(labels=None)
+    T=[]
+    x,y = E[which_edge]
+
+    S = [0 for _ in range (len(V)+1)]
+
+    for P in G.all_paths(x,y):
+        l = len(P)
+        if l > 2:
+            S[l] += 1
+        
+    return S
+
+def PS(G, which_edge=0):
+    #Sum over cycles contains edges 12 
+    Sum = 0
+    for k,n in zip(range(G.num_verts()+1), Set_Num_cycles2(G, which_edge)):
+        Sum += (1/2**k)*n
+
+    return Sum
+
+
+def Prb3(G, which_edge=0):
+    #Sum over cycles contains edges 12 
+    
+    return [(1/2**k)*n for k,n in zip(range(G.num_verts()+1), Set_Num_cycles2(G, which_edge))]
+
+def all_paths(G, start, end, use_multiedges=False, report_edges=False, labels=False):
+    """
+    Return the list of all paths between a pair of vertices.
+
+    """
+    if start not in G:
+        raise LookupError("start vertex ({0}) is not a vertex of the graph".format(start))
+    if end not in G:
+        raise LookupError("end vertex ({0}) is not a vertex of the graph".format(end))
+
+    if G.is_directed():
+        iterator = G.neighbor_out_iterator
+    else:
+        iterator = G.neighbor_iterator
+
+    if report_edges and labels:
+        edge_labels = {}
+        if use_multiedges:
+            for e in G.edge_iterator():
+                if (e[0], e[1]) in edge_labels:
+                    edge_labels[(e[0], e[1])].append(e)
+                else:
+                    edge_labels[(e[0], e[1])] = [e]
+        else:
+            for e in G.edge_iterator():
+                if (e[0], e[1]) not in edge_labels:
+                    edge_labels[(e[0], e[1])] = [e]
+        if not G.is_directed():
+            for u, v in list(edge_labels):
+                edge_labels[v, u] = edge_labels[u, v]
+    elif use_multiedges and G.has_multiple_edges():
+        from collections import Counter
+        edge_multiplicity = Counter(G.edge_iterator(labels=False))
+
+    if start == end:
+        return [[start]]
+
+    all_paths = []      # list of
+    act_path = []       # the current path
+    act_path_iter = []  # the neighbor/successor-iterators of the current path
+    done = False
+    s = start
+    while not done:
+        if s == end:    # if path completes, add to list
+            all_paths.append(act_path + [s])
+        else:
+            if s not in act_path:   # we want vertices just once in a path
+                act_path.append(s)  # extend current path
+                act_path_iter.append(iterator(s))  # save the state of the neighbor/successor-iterator of the current vertex
+        s = None
+        while (s is None) and not done:
+            try:
+                s = next(act_path_iter[-1])  # try to get the next neighbor/successor, ...
+            except (StopIteration):          # ... if there is none ...
+                act_path.pop()               # ... go one step back
+                act_path_iter.pop()
+            if not act_path:                 # there is no other vertex ...
+                done = True                  # ... so we are done
+
+    if report_edges and labels:
+        path_with_labels = []
+        for p in all_paths:
+            path_with_labels.extend(cartesian_product([edge_labels[e] for e in zip(p[:-1], p[1:])]))
+        return path_with_labels
+    elif use_multiedges and G.has_multiple_edges():
+        multiple_all_paths = []
+        for p in all_paths:
+            m = prod(edge_multiplicity[e] for e in zip(p[:-1], p[1:]))
+            if report_edges:
+                ep = list(zip(p[:-1], p[1:]))
+            for _ in range(m):
+                if report_edges:
+                    multiple_all_paths.append(ep)
+                else:
+                    multiple_all_paths.append(p)
+        return multiple_all_paths
+    elif report_edges:
+        return [list(zip(p[:-1], p[1:])) for p in all_paths]
+    return all_paths
+
+
+use_multiedges = False
+report_edges = False
+labels = False
+
+G = graphs.Tutte12Cage()
+start = 0
+end = 1
+
+
+if G.is_directed():
+    iterator = G.neighbor_out_iterator
+else:
+    iterator = G.neighbor_iterator
+
+if report_edges and labels:
+    edge_labels = {}
+    if use_multiedges:
+        for e in G.edge_iterator():
+            if (e[0], e[1]) in edge_labels:
+                edge_labels[(e[0], e[1])].append(e)
+            else:
+                edge_labels[(e[0], e[1])] = [e]
+
+    else:
+        for e in G.edge_iterator():
+            if (e[0], e[1]) not in edge_labels:
+                edge_labels[(e[0], e[1])] = [e]
+                
+    if not G.is_directed():
+        for u, v in list(edge_labels):
+            edge_labels[v, u] = edge_labels[u, v]
+
+elif use_multiedges and G.has_multiple_edges():
+    from collections import Counter
+    edge_multiplicity = Counter(G.edge_iterator(labels=False))
+
+if start == end:
+    print([[start]])
+    
+L = []      # list of
+act_path = []       # the current path
+act_path_iter = []  # the neighbor/successor-iterators of the current path
+done = False
+s = start
+while not done:
+    if s == end:    # if path completes, add to list
+        L.append((len(act_path + [s])))
+
+    else:
+        if s not in act_path:   # we want vertices just once in a path
+            act_path.append(s)  # extend current path
+            act_path_iter.append(iterator(s))  # save the state of the neighbor/successor-iterator of the current vertex
+    s = None
+    while (s is None) and not done:
+        try:
+            s = next(act_path_iter[-1])  # try to get the next neighbor/successor, ...
+        except (StopIteration):          # ... if there is none ...
+            act_path.pop()               # ... go one step back
+            act_path_iter.pop()
+        if not act_path:                 # there is no other vertex ...
+            done = True                  # ... so we are done
+
+print(L)
