@@ -1,1 +1,3 @@
 # Cycle-double-cover
+
+The cycle double cover conjecture states that for every bridgeless graph $G$, there exists a family $\mathcal{F}$ of cycles such that each edge of the graph is contained in exactly two members of $\mathcal{F}$. Given an embedding of a graph $G$, an edge $e$ is called a $\textit{bad edge}$ if it is visited twice by the boundary of one face. CDC conjecture is equivalent to bridgeless cubic graphs having an embedding with no bad edge. Here, we try to analyze the number of bad edges (probability of having a bad edge, probability of having a bad cycle, average number of bad edges, etc) over random embeddings. 
